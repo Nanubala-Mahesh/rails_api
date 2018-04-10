@@ -3,16 +3,18 @@ class ProductsController < ActionController::API
   before_action :product_params, only: %i[create]
 
   def index
-    @products = Product.all
-    render json: { success: true, stataus: 200, message: nil, data: @products } 
+    products = Product.all
+    response = ProductsServices::IncomeCalculator.new(products).execute
+    render json: Response.new.success(nil, response)
   end
 
   def create
-    @product = Product.new(product_params)
-    if @product.save
-      render json: { success: true, stataus: 200, message: 'Product created succesfully', data: @product }
+    product = Product.new(product_params)
+    if product.save
+      response = ProductsFormatter::Product.new(product).generate
+      render json: Response.new.success('Product created succesfully', response)
     else
-      render json: { success: false, stataus: 404, message: @product.errors.full_messages.join(', '), data: nil }
+      render json: Response.new.failure(product.errors.full_messages.join(', '), nil)
     end
   end
 
